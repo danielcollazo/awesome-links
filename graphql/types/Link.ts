@@ -91,6 +91,7 @@ export const LinksQuery = extendType({
           // query after the cursor to check if we have nextPage
           const secondQueryResults = await ctx.prisma.link.findMany({
             take: args.first,
+            skip: 1, // skip the cursor
             cursor: {
               id: myCursor,
             },
