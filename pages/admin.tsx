@@ -1,9 +1,18 @@
-import React from "react";
+import React, { ChangeEvent } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { gql, useMutation } from "@apollo/client";
 import { getSession, withPageAuthRequired } from "@auth0/nextjs-auth0";
 import prisma from "../lib/prisma";
+
+interface AwesomeLink {
+  title: string;
+  url: string;
+  imageUrl: string;
+  category: string;
+  description: string;
+  image: FileList | null;
+}
 
 const CreateLinkMutation = gql`
   mutation (
@@ -36,17 +45,20 @@ function Admin() {
     onCompleted: () => reset(),
   });
 
-  const handlePhotoUpload = async (e) => {
+  const handleImageUpload = async (
+    e: ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
     const file = e.target.files[0];
     const fileName = encodeURIComponent(file.name);
     const res = await fetch(`/api/upload-image?file=${fileName}`);
     const data = await res.json();
     const formData = new FormData();
 
-    // @ts-ignore
-    Object.entries({ ...data.fields, file }).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
+    Object.entries({ ...data.fields, file }).forEach(
+      ([key, value]: [string, string | File]) => {
+        formData.append(key, value);
+      }
+    );
 
     toast.promise(
       fetch(data.url, {
@@ -61,8 +73,7 @@ function Admin() {
     );
   };
 
-  const onSubmit = async (data) => {
-    console.log("data", data);
+  const onSubmit = async (data: AwesomeLink): Promise<void> => {
     const { title, url, category, description, image } = data;
     const imageUrl = `https://${process.env.NEXT_PUBLIC_AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${image[0].name}`;
     const variables = { title, url, category, description, imageUrl };
@@ -132,7 +143,7 @@ function Admin() {
           </span>
           <input
             {...register("image", { required: true })}
-            onChange={handlePhotoUpload}
+            onChange={handleImageUpload}
             type="file"
             accept="image/png, image/jpeg"
             name="image"
