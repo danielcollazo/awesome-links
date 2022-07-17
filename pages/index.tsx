@@ -2,8 +2,8 @@ import Head from "next/head";
 import { AwesomeLink } from "../components/AwesomeLink";
 import { gql, useQuery } from "@apollo/client";
 
-const allLinksQuery = gql`
-  query allLinksQuery($first: Int, $after: String) {
+const AllLinksQuery = gql`
+  query AllLinksQuery($first: Int, $after: String) {
     links(first: $first, after: $after) {
       pageInfo {
         endCursor
@@ -25,8 +25,8 @@ const allLinksQuery = gql`
 `;
 
 export default function Home() {
-  const { loading, error, data, fetchMore } = useQuery(allLinksQuery, {
-    variables: { first: 1 },
+  const { loading, error, data, fetchMore } = useQuery(AllLinksQuery, {
+    variables: { first: 3 },
   });
 
   if (loading) return <p>Loading...</p>;
