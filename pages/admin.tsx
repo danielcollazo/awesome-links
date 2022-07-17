@@ -2,7 +2,7 @@ import React from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { gql, useMutation } from "@apollo/client";
-import { getSession } from "@auth0/nextjs-auth0";
+import { getSession, withPageAuthRequired } from "@auth0/nextjs-auth0";
 import prisma from "../lib/prisma";
 
 const CreateLinkMutation = gql`
@@ -167,37 +167,39 @@ function Admin() {
 
 export default Admin;
 
-export const getServerSideProps = async ({ req, res }) => {
-  const session = getSession(req, res);
+export const getServerSideProps = withPageAuthRequired({
+  async getServerSideProps({ req, res }) {
+    const session = getSession(req, res);
 
-  if (!session) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: "api/auth/login",
+    if (!session) {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "api/auth/login",
+        },
+        props: {},
+      };
+    }
+
+    const user = await prisma.user.findUnique({
+      select: {
+        email: true,
+        role: true,
       },
-      props: {},
-    };
-  }
-
-  const user = await prisma.user.findUnique({
-    select: {
-      email: true,
-      role: true,
-    },
-    where: {
-      email: session.user.email,
-    },
-  });
-
-  if (user.role !== "ADMIN") {
-    return {
-      redirect: {
-        permanent: false,
-        destination: "/404",
+      where: {
+        email: session.user.email,
       },
-    };
-  }
+    });
 
-  return { props: {} };
-};
+    if (user.role !== "ADMIN") {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/404",
+        },
+      };
+    }
+
+    return { props: {} };
+  },
+});
